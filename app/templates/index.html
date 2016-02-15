@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="jumbotron">
+		<h1>Welcome to the Console!</h1>
+		<p>This console is a web based access point from which an administrator may view and edit various attributes of the card readers in this system, and the personnel who use the card readers.</p>
+		<form action="#" method="post" name="login">
+			{{ form.hidden_tag() }}
+      		<p>Please enter your username:<br>
+          		{{ form.username(size=25) }}<br>
+      		</p>
+      		<p>And your password:<br>
+      			{{ form.password(size=25) }}<br>
+      		</p>
+      		<p>{{ form.remember_me }} Remember Me</p>
+      		<p><input type="submit" value="Sign In"></p>
+  		</form>
+	</div>
+{% endblock %}

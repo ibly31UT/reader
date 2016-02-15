@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<title>{{ title }} - Console</title>
+		<link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+		<script src="/static/js/bootstrap.min.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+	</head>
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">Console</a>
+				</div>
+				<div>
+					<ul class="nav navbar-nav">
+					{% for navitem in navigation %}
+					{% if navitem.name == title %}
+						<li class="active">
+					{% else %}
+						<li>
+					{% endif %}
+						<a href="{{ navitem.link }}">{{ navitem.name }}</a></li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<div class="container">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+	        {% for category, message in messages %}
+	        {% if category == "error" %}
+	            <div class="alert alert-danger"><strong>Error: </strong>{{ message }} </div>
+	        {% else %}
+	        	<div class="alert alert-success">{{ message }} </div>
+	        {% endif %}
+	        {% endfor %}
+    	{% endwith %}
+		{% block content%}{% endblock %}
+		</div>
+	</body>
+</html>

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="jumbotron">
+		<div class="alert alert-success">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
+	</div>
+{% endblock %}
