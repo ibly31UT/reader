@@ -1,51 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="jumbotron">
+	<div class="container">
 		<div class="alert alert-info">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
-		{% if user.access == 2 %}
-		<p>You are logged in as a user with <strong>Admin</strong> access level. Create users by using this form:</p>
-		<div id="create" class="collapse in">
-			<form action="#" method="post" name="createuser">
-				{{ form.hidden_tag() }}
-	      		<p>Please enter user's username:<br>
-	          		{{ form.username(size=25) }}<br>
-	      		</p>
-	      		<p>Password:<br>
-	      			{{ form.password(size=25) }}<br>
-	      		</p>
-	      		<p>Confirm Password:<br>
-	      			{{ form.confirm(size=25) }}<br>
-	      		</p>
-	      		
-	      		<p><input type="submit" value="Create User"></p>
-	  		</form>
-  		</div>
-  		<button class="btn btn-info" data-target="#create" data-toggle="collapse">Show/Hide Form</button>
-  		{% endif %}
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th>Username</th>
-					<th>Access Level</th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for user in users %}
-				<tr>
-					<td>{{ user.username }}</td>
-					<td>
-						{% if user.access == 2 %}
-							<strong>Admin</strong>
-						{% elif user.access == 1 %}
-							Priority User
-						{% else %}
-							User
-						{% endif %}
-					</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-
+		<div class="panel-group">
+			{% if user.access == 2 %}
+			<div class="panel panel-info">
+		        <div class="panel-heading"><strong>Admin Access Level</strong></div>
+		        <div class="panel-body">
+					<p>You are logged in as a user with <strong>Admin</strong> access level. Create users by using this form:</p>
+					<form action="#" method="post" name="createuser">
+						{{ form.hidden_tag() }}
+			      		<div class="col-sm-4">
+			      			<p>{{ form.username.label }}: {{ form.username(size=25) }}<br></p>
+							<p>{{ form.password.label }}: {{ form.password(size=25) }}<br></p>
+							<p>{{ form.confirm.label }}: {{ form.confirm(size=25) }}<br></p>
+			      		</div>
+			      		<div class="col-sm-4">
+			      			{{ form.access.label}}: {{ form.access }}
+			      		</div>
+			      		<div class="col-sm-4">
+			      			<input class="btn btn-lg" type="submit" value="Create User">
+			      		</div>
+			  		</form>
+		  		</div>
+		  	</div>
+	  		{% endif %}
+	  		<div class="panel panel-info">
+		        <div class="panel-heading"><strong>User Database</strong></div>
+		        <div class="panel-body">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Access Level</th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for user in users %}
+							<tr>
+								<td>{{ user.username }}</td>
+								<td>
+									{% if user.access == 2 %}
+										<strong>Admin</strong>
+									{% elif user.access == 1 %}
+										Priority User
+									{% else %}
+										User
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
 	</div>
 {% endblock %}

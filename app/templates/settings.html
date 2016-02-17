@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <div container="container">
+    <div class="alert alert-info">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
+    <div class="panel-group">
+  		{% for setting in settings %}
+        <div class="panel panel-info">
+          <div class="panel-heading"><strong>{{ setting.name }}</strong></div>
+          <div class="panel-body cener-block">
+            <form action="#" method="post" name="{{ setting.name }}">
+              {{ setting.form.hidden_tag() }}
+              {% if setting.form.password is defined %}
+                {{ setting.form.oldpassword.label }}: {{ setting.form.oldpassword(size=25)}}<br>
+                {{ setting.form.password.label }}: {{ setting.form.password(size=25)}}<br>
+                {{ setting.form.confirm.label }}: {{ setting.form.confirm(size=25)}}<br>
+              {% elif setting.form.radio is defined %}
+                {{ setting.form.radio.label }}: {{ setting.form.radio}}<br>
+              {% endif %}
+              <br>
+              <input type="submit" value="Save Changes">
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+	</div>
+{% endblock %}

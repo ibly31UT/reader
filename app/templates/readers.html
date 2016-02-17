@@ -1,6 +1,47 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="jumbotron">
-		<div class="alert alert-success">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
+	<div class="container">
+		<div class="alert alert-info">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
+		{% if user.access == 2 %}
+		<div class="panel panel-info">
+		    <div class="panel-heading"><strong>Reader List</strong></div>
+		    <div class="panel-body">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Active</th>
+							<th>Users</th>
+							<th>Active Time Period</th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for reader in readers %}
+						<tr>
+							<td>{{ reader.name }}</td>
+							{% if reader.active %}
+							<td style="color:green">Active</td>
+							{% else %}
+							<td style="color:red">Inactive</td>
+							{% endif %}
+							<td>
+							{% for readeruser in reader.users %}
+								{% for user in users %}
+									{% if user.id|int() == readeruser|int() %}
+										{{ user.username }},
+									{% endif %}
+								{% endfor %}
+							{% endfor %}
+							</td>
+							<td>
+								{{ reader.starttime }} - {{ reader.endtime}}
+							</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		{% endif %}
 	</div>
 {% endblock %}
