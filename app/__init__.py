@@ -17,30 +17,47 @@ from app import views
 
 from .models import User, Reader
 import json
+import random
 import datetime
 
 db.drop_all()
 db.create_all()
 User.query.delete()
 
-admin = User("admin", 2, "password")
-regularuser = User("user", 1, "wordpass")
-dumbuser = User("dumbuser", 0, "wordpass2")
-dumberuser = User("dumberuser", 0, "wordpass3")
-evendumberuser = User("evendumberuser", 0, "password")
+cardid = []
+facid = []
+
+for i in range(0, 6):
+	cardid.append(str(int(random.random() * 9999)))
+	facid.append(str(int(random.random() * 9999)))
+
+admin = User("Administmaster", 99, cardid[0], facid[0], "password")
+user = User("Employee 1", 1, cardid[1], facid[1], "password")
+user2 = User("Employee 2", 1, cardid[2], facid[2], "password")
+guest = User("Employee 2's Wife", 0, cardid[3], facid[3], "password")
+security = User("Security Guard #145", 3, cardid[4], facid[4], "password")
+priority = User("CEO Matthews", 4, cardid[5], facid[5], "password")
 db.session.add(admin)
-db.session.add(regularuser)
-db.session.add(dumbuser)
-db.session.add(dumberuser)
-db.session.add(evendumberuser)
+db.session.add(user)
+db.session.add(user2)
+db.session.add(guest)
+db.session.add(security)
+db.session.add(priority)
 db.session.commit()
 
 starttime = datetime.time(5, 0, 0)
 endtime = datetime.time(23, 59, 0)
 
-frontdoorreader = Reader("Front Door", True, json.dumps([admin.get_id(), regularuser.get_id()]), starttime, endtime)
-backdoorreader = Reader("Back Door", False, json.dumps([admin.get_id(), regularuser.get_id(), dumbuser.get_id()]), starttime, endtime)
-sidedoorreader = Reader("Side Door", True, json.dumps([admin.get_id(), regularuser.get_id(), dumbuser.get_id(), dumberuser.get_id(), evendumberuser.get_id()]), starttime, endtime)
+firstAccessGroup = [admin.get_id(), user.get_id(), user2.get_id(), guest.get_id(), security.get_id(), priority.get_id()]
+secondAccessGroup = list(firstAccessGroup)
+secondAccessGroup.remove(user.get_id())
+secondAccessGroup.remove(user2.get_id())
+secondAccessGroup.remove(guest.get_id())
+thirdAccessGroup = list(secondAccessGroup)
+
+frontdoorreader = Reader("Front Door", True, json.dumps(firstAccessGroup), starttime, endtime)
+backdoorreader = Reader("Back Door", False, json.dumps(secondAccessGroup), starttime, endtime)
+sidedoorreader = Reader("Side Door", True, json.dumps(secondAccessGroup), starttime, endtime)
 db.session.add(frontdoorreader)
 db.session.add(backdoorreader)
 db.session.add(sidedoorreader)

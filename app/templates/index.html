@@ -1,24 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
+  <script type="text/javascript">
+  $(function(){
+    $("#usernav").remove();
+  });
+  </script>
 	<div class="jumbotron">
 		<h1>Welcome to the Console!</h1>
 		<p>This console is a web based access point from which an administrator may view and edit various attributes of the card readers in this system, and the personnel who use the card readers.</p>
     <div class="row">
       <div class="col-sm-4"></div>
       <div class="col-sm-4 rounded">
-  		  <form class="center-block" action="#" method="post" name="login">
+  		  <form action="#" method="post" name="login">
   			{{ form.hidden_tag() }}
+          <div class="text-center">
         		<p>Please enter your username:<br>
-            		{{ form.username(size=25) }}<br>
+            		{{ form.username(size=28) }}<br>
         		</p>
         		<p>And your password:<br>
-        			{{ form.password(size=25) }}<br>
+        			{{ form.password(size=28) }}<br>
         		</p>
         		<p>{{ form.remember_me }} Remember Me</p>
         		<p><input type="submit" value="Sign In"></p>
+          </div>
     		</form>
       </div>
       <div class="col-sm-4"></div>
     </div>
-	</div>
+  </div>
 {% endblock %}

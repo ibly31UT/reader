@@ -4,11 +4,15 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), nullable=False)
     access = db.Column(db.Integer, nullable=False)
+    cardid = db.Column(db.String(64), nullable=False)
+    facid = db.Column(db.String(64), nullable=False)
     password = db.Column(db.String(64), nullable=False)
     
-    def __init__(self, username, access, password):
+    def __init__(self, username, access, cardid, facid, password):
         self.username = username
         self.access = access
+        self.cardid = cardid
+        self.facid = facid
         self.password = password
 
     @property

@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="container">
-		<div class="alert alert-info">Logged in as <strong>{{ user.username }}</strong>. <a class="btn btn-danger btn-small" href="{{ url_for('logout') }}">Logout</a></div>
-		{% if user.access == 2 %}
+		{% if user.access == 99 %}
 		<div class="panel panel-info">
 		    <div class="panel-heading"><strong>Reader List</strong></div>
 		    <div class="panel-body">

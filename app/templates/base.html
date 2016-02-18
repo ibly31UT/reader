@@ -4,7 +4,7 @@
 		<link href="/static/css/bootstrap.min.css?q=123456" rel="stylesheet" media="screen">
 		<script src="/static/js/bootstrap.min.js"></script>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	</head>
 	<body>
 		<nav class="navbar navbar-default navbar-static-top">
@@ -24,7 +24,19 @@
 					{% endfor %}
 					</ul>
 				</div>
+				<ul id="usernav" class="nav navbar-nav navbar-right">
+					{% if user is defined %}
+						<li style="vertical-align:center">
+							<a href="#">Logged in as {% if g.user.access == 99 %}<strong>{{ user.username }}</strong>{% else %}{{ user.username }}{% endif %}.</a>
+						</li>
+						<li>
+							<a href="{{ url_for('logout') }}">Logout</a>
+						</li>
+					{% endif %}
+				</ul>
 			</div>
+			
+           
 		</nav>
 		<div class="container">
 		{% with messages = get_flashed_messages(with_categories=true) %}
