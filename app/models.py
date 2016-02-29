@@ -36,14 +36,14 @@ class User(db.Model):
 class Reader(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
-    active = db.Column(db.Boolean, nullable=False)
+    status = db.Column(db.Integer, nullable=False)
     users = db.Column(db.String(128), nullable=False)
     starttime = db.Column(db.Time, nullable=False)
     endtime = db.Column(db.Time, nullable=False)
     
-    def __init__(self, name, active, users, starttime, endtime):
+    def __init__(self, name, status, users, starttime, endtime):
         self.name = name
-        self.active = active
+        self.status = status
         self.users = users
         self.starttime = starttime
         self.endtime = endtime

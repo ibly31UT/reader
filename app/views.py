@@ -1,12 +1,13 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
-from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm
+from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm
 from .models import User, Reader
+import json
 
-navigation = [{"name": "Home", "link": "index"}, {"name": "Card Readers", "link": "readers"}, {"name": "Personnel", "link": "users"}, {"name": "Settings", "link": "settings"}]
+navigation = [{"name": "Home", "link": "index"}, {"name": "Card Readers", "link": "readers"}, {"name": "Personnel", "link": "users"}, {"name": "Reception", "link": "reception"}, {"name": "Settings", "link": "settings"}]
 #accessLevels = [("0","Guest"), ("1","User"), ("2","Security"), ("3","Priority User"), ("99","Admin")]
-accessLevels = ["Guest", "User", "Security", "Priority User", "Admin"]
+accessLevels = ["Guest", "User", "Security", "Priority User", "Reception"]
 # ^^ Also defined identically in forms.py, unsure how to make a global declaration of this array
 
 @app.before_request
@@ -53,6 +54,11 @@ def readers():
 	readers = Reader.query.all()
 	users = User.query.all()
 
+	for reader in readers:
+		if reader.status == 2:
+			flash("There are one or more readers with status: TAMPER, please confirm.", "warning")
+			break
+
 	if g.user.access != 99:
 		flash("You are not logged in as a user capable of viewing settings. Please log in as admin.")
 		return redirect("/index")
@@ -89,6 +95,32 @@ def users():
 		
 	users = User.query.all()
 	return render_template("users.html", title="Personnel", users=users, user=g.user, accessLevels=accessLevels, createUserForm=createUserForm, editUserForm=editUserForm, navigation=navigation)
+
+@app.route("/reception", methods=["GET", "POST"])
+@login_required
+def reception():
+	readers = Reader.query.all()
+	users = User.query.all()
+	currentReader = 2
+
+	createGuestForm = CreateGuestForm()
+	manualCheckInForm = ManualCheckInForm()
+
+	return render_template("reception.html", title="Reception", readers=readers, currentReader=currentReader, users=users, createGuestForm=createGuestForm, manualCheckInForm=manualCheckInForm, user=g.user, navigation=navigation)
+
+@app.route("/readerEnable", methods=["POST"])
+def readerEnable():
+	readerID = request.form["readerID"]
+	reader = Reader.query.get(int(readerID))
+
+	return json.dumps({"status": "OK", "readerName": reader.name})
+
+@app.route("/readerDisable", methods=["POST"])
+def readerDisable():
+	readerID = request.form["readerID"]
+	reader = Reader.query.get(int(readerID))
+
+	return json.dumps({"status": "OK", "readerName": reader.name})
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required

@@ -1,7 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="container">
+	<script type="text/javascript">
+		$(function() {
+		    $(".enable").click(function() {
+		       	$.ajax({
+		            url: "/readerEnable",
+		            data: {"readerID": this.id},
+		            type: "POST",
+		            success: function(response) {
+		                window.alert(response);
+		                console.log(response);
+		            },
+		            error: function(error) {
+		                console.log(error);
+		            }
+		        });
+		    });
+		});
+	</script>
+	<div class="panel-group">
 		{% if user.access == 99 %}
+		<div class="panel panel-info">
+	        <div class="panel-heading"><strong>Create and Edit Card Readers</strong></div>
+	        <div class="panel-body">
+				<p>You are logged in as a user with <strong>Admin</strong> access level. View User and Reader database by clicking this link: </p>
+				<a href="admin/user" class="btn btn-success">Admin Database Access</a>
+	  		</div>
+	  	</div>
 		<div class="panel panel-info">
 		    <div class="panel-heading"><strong>Reader List</strong></div>
 		    <div class="panel-body">
@@ -9,19 +34,22 @@
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Active</th>
+							<th>Status</th>
 							<th>Users</th>
 							<th>Active Time Period</th>
+							<th>Actions</th>
 						</tr>
 					</thead>
 					<tbody>
 					{% for reader in readers %}
 						<tr>
-							<td>{{ reader.name }}</td>
-							{% if reader.active %}
+							<td style="width:10%">{{ reader.name }}</td>
+							{% if reader.status == 0 %}
+							<td style="color:gray">Inactive</td>
+							{% elif reader.status == 1 %}
 							<td style="color:green">Active</td>
 							{% else %}
-							<td style="color:red">Inactive</td>
+							<td style="color:#ff0000" class="flash250">TAMPER</td>
 							{% endif %}
 							<td>
 							{% for readeruser in reader.users %}
@@ -34,6 +62,10 @@
 							</td>
 							<td>
 								{{ reader.starttime }} - {{ reader.endtime}}
+							</td>
+							<td style="width:15%">
+								<a href="#" id="{{ reader.id }}" class="btn btn-primary enable">Enable</a>
+								<a href="#" id="{{ reader.id }}" class="btn btn-primary disable">Disable</a>
 							</td>
 						</tr>
 					{% endfor %}

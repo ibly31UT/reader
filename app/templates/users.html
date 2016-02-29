@@ -13,102 +13,55 @@
 		}
 	});
 	</script>
-	<div class="container">
-		<div id="usermodal" class="modal" role="dialog">
-			<div class="modal-dialog modal-lg">
-				<div class="modal-content">
-					<form action="#" method="post" name="edituser">
-						<div class="modal-header">
-							<button type="button" class="close" onclick="$('#usermodal').hide()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-							<h4 class="modal-title">Edit User Properties</h4>
-						</div>
-						<div class="modal-body">
-							{{ editUserForm.hidden_tag() }}
-							<div class="col-sm-4">
-								{{ editUserForm.access.label}}: {{ editUserForm.access }}
-							</div>
-							<div class="col-sm-4">
-								{{ editUserForm.facid.label}}: {{ editUserForm.facid}}
-							</div>
-							<div class="col-sm-4">
-								{{ editUserForm.cardid.label}}: {{ editUserForm.cardid }}
-							</div>
-				  			<p>
-				  				<br><br><br><br><br><br>	<!-- hackish way to make this damn modal extend its height-->
-				  			</p>
-						</div>
-						<div class="modal-footer">
-							<button type="button" class="btn btn-default" onclick="$('#usermodal').hide()">Close</button>
-							<!--<button type="button" class="btn btn-primary">Save changes</button>-->
-							<input class="btn btn-success" type="submit" value="Save Changes">
-						</div>
-					</form>
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
-		<div class="panel-group">
-			{% if user.access == 99 %}
-			<div class="panel panel-info">
-		        <div class="panel-heading"><strong>Create New User</strong></div>
-		        <div class="panel-body">
-					<p>You are logged in as a user with <strong>Admin</strong> access level. Create users by using this form:</p>
-					<form action="#" method="post" name="createuser">
-						{{ createUserForm.hidden_tag() }}
-			      		<div class="col-sm-4">
-			      			<p>{{ createUserForm.username.label }}: {{ createUserForm.username(size=25) }}<br></p>
-							<p>{{ createUserForm.password.label }}: {{ createUserForm.password(size=25) }}<br></p>
-							<p>{{ createUserForm.confirm.label }}: {{ createUserForm.confirm(size=25) }}<br></p>
-			      		</div>
-			      		<div class="col-sm-4">
-			      			{{ createUserForm.access.label}}: {{ createUserForm.access }}
-			      		</div>
-			      		<div class="col-sm-4">
-			      			<input class="btn btn-lg btn-success" type="submit" value="Create User">
-			      		</div>
-			  		</form>
-		  		</div>
-		  	</div>
-	  		{% endif %}
-	  		<div class="panel panel-info">
-		        <div class="panel-heading"><strong>User Database</strong></div>
-		        <div class="panel-body">
-					<table class="table table-striped">
-						<thead>
-							<tr>
-								<th>ID</td>
-								<th>Username</th>
-								<th class="text-center">Access Level</th>
-								<th>Facility ID</th>
-								<th>Card ID</th>
-							</tr>
-						</thead>
-						<tbody>
-						{% for user in users %}
-							<tr class="userrow">
-								<td style="width:40" class="userid">{{ user.id }}</td>
-								<td>{{ user.username }}</td>
-								<td style="width:160" class="text-center">
-									{% if user.access == 99 %}
-										<strong>Admin</strong>
-									{% else %}
-										{% for level in accessLevels %}
-											{% if loop.index0 == user.access %}
-												{{ level }}
-											{% endif %}
-										{% endfor %}
-									{% endif %}
-								</td>
-								<td style="width:100">
-									{{ user.facid }}
-								</td>
-								<td style="width:100">
-									{{ user.cardid }}
-								</td>
-							</tr>
-						{% endfor %}
-						</tbody>
-					</table>
-				</div>
+	<div class="panel-group">
+		{% if user.access == 99 %}
+		<div class="panel panel-info">
+	        <div class="panel-heading"><strong>Create and Edit Users</strong></div>
+	        <div class="panel-body">
+				<p>You are logged in as a user with <strong>Admin</strong> access level. View User and Reader database by clicking this link: </p>
+				<a href="admin/user" class="btn btn-success">Admin Database Access</a>
+	  		</div>
+	  	</div>
+  		{% endif %}
+  		<div class="panel panel-info">
+	        <div class="panel-heading"><strong>User Database</strong></div>
+	        <div class="panel-body">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>ID</td>
+							<th>Username</th>
+							<th class="text-center">Access Level</th>
+							<th>Facility ID</th>
+							<th>Card ID</th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for user in users %}
+						<tr class="userrow">
+							<td style="width:10%" class="userid">{{ user.id }}</td>
+							<td>{{ user.username }}</td>
+							<td style="width:160" class="text-center">
+								{% if user.access == 99 %}
+									<strong>Admin</strong>
+								{% else %}
+									{% for level in accessLevels %}
+										{% if loop.index0 == user.access %}
+											{{ level }}
+										{% endif %}
+									{% endfor %}
+								{% endif %}
+							</td>
+							<td style="width:10%">
+								{{ user.facid }}
+							</td>
+							<td style="width:10%">
+								{{ user.cardid }}
+							</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>

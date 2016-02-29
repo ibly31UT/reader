@@ -5,18 +5,19 @@
   		{% for setting in settings %}
         <div class="panel panel-info">
           <div class="panel-heading"><strong>{{ setting.name }}</strong></div>
-          <div class="panel-body center-block">
+          <div class="panel-body text-center">
             <form action="#" method="post" name="{{ setting.name }}">
               {{ setting.form.hidden_tag() }}
-              {% if setting.form.password is defined %}
-                {{ setting.form.oldpassword.label }}: {{ setting.form.oldpassword(size=25)}}<br>
-                {{ setting.form.password.label }}: {{ setting.form.password(size=25)}}<br>
-                {{ setting.form.confirm.label }}: {{ setting.form.confirm(size=25)}}<br>
-              {% elif setting.form.radio is defined %}
-                {{ setting.form.radio.label }}: {{ setting.form.radio}}<br>
-              {% endif %}
-              <br>
-              <input type="submit" value="Save Changes">
+              {% for formitem in setting.form %}
+                {% if formitem != setting.form.csrf_token %}
+
+                  <div class="form-group">
+                    <label>{{ formitem.label }}</label><br>
+                    {{ formitem }}
+                  </div>
+                {% endif %}
+              {% endfor %}
+              <button type="submit" class="btn btn-primary">Save Changes</button>
             </form>
           </div>
         </div>

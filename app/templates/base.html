@@ -1,12 +1,41 @@
 <html>
 	<head>
 		<title>{{ title }} - Console</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 		<link href="/static/css/bootstrap.min.css?q=123456" rel="stylesheet" media="screen">
 		<script src="/static/js/bootstrap.min.js"></script>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	</head>
 	<body>
+		<script type="text/javascript">
+			$(document).ready(function(){
+		    window.setInterval(flash, 500);
+		    function flash(){
+		    	var warnings = document.getElementsByClassName("warning");
+		    	var i;
+		    	for(i = 0; i < warnings.length; i++){
+			    	if(warnings[i].className.indexOf("alert-warning") > -1)
+			    		warnings[i].className = "alert alert-danger warning";
+			    	else
+		    			warnings[i].className = "alert alert-warning warning";	
+		    	}
+		    }
+		    $(document).ready(function(){
+		    window.setInterval(flash250, 250);
+		    function flash250(){
+		    	var flashers = document.getElementsByClassName("flash250");
+		    	var i;
+		    	for(i = 0; i < flashers.length; i++){
+			    	if(flashers[i].style.color == "red"){
+			    		flashers[i].style.color = "black";
+			    	}else{
+			    		flashers[i].style.color = "red";
+			    	}
+		    	}
+		    }
+		});
+		});
+		</script>
 		<nav class="navbar navbar-default navbar-static-top">
 			<div class="container">
 				<div class="navbar-header">
@@ -14,14 +43,18 @@
 				</div>
 				<div>
 					<ul class="nav navbar-nav">
-					{% for navitem in navigation %}
-					{% if navitem.name == title %}
-						<li class="active">
-					{% else %}
-						<li>
+					{% if user.access == 4 %}
+						<li class="active"><a href="reception">Reception</a></li>
+					{% elif user.access != 4 %}
+						{% for navitem in navigation %}
+							{% if navitem.name == title %}
+								<li class="active">
+							{% else %}
+								<li>
+							{% endif %}
+							<a href="{{ navitem.link }}">{{ navitem.name }}</a></li>
+						{% endfor %}
 					{% endif %}
-						<a href="{{ navitem.link }}">{{ navitem.name }}</a></li>
-					{% endfor %}
 					</ul>
 				</div>
 				<ul id="usernav" class="nav navbar-nav navbar-right">
@@ -43,7 +76,9 @@
 	        {% for category, message in messages %}
 	        {% if category == "error" %}
 	            <div class="alert alert-danger"><strong>Error: </strong>{{ message }} </div>
-	        {% else %}
+	        {% elif category == "warning" %}
+	        	<div class="alert alert-warning warning"><strong>Warning: </strong>{{ message }} <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>  </div>
+        	{% else %}
 	        	<div class="alert alert-success">{{ message }} </div>
 	        {% endif %}
 	        {% endfor %}
