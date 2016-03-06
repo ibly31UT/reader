@@ -9,32 +9,30 @@
 	<body>
 		<script type="text/javascript">
 			$(document).ready(function(){
-		    window.setInterval(flash, 500);
-		    function flash(){
-		    	var warnings = document.getElementsByClassName("warning");
-		    	var i;
-		    	for(i = 0; i < warnings.length; i++){
-			    	if(warnings[i].className.indexOf("alert-warning") > -1)
-			    		warnings[i].className = "alert alert-danger warning";
-			    	else
-		    			warnings[i].className = "alert alert-warning warning";	
-		    	}
-		    }
-		    $(document).ready(function(){
-		    window.setInterval(flash250, 250);
-		    function flash250(){
-		    	var flashers = document.getElementsByClassName("flash250");
-		    	var i;
-		    	for(i = 0; i < flashers.length; i++){
-			    	if(flashers[i].style.color == "red"){
-			    		flashers[i].style.color = "black";
-			    	}else{
-			    		flashers[i].style.color = "red";
+			    window.setInterval(flash, 500);
+			    function flash(){
+			    	var warnings = document.getElementsByClassName("warning");
+			    	var i;
+			    	for(i = 0; i < warnings.length; i++){
+				    	if(warnings[i].className.indexOf("alert-warning") > -1)
+				    		warnings[i].className = "alert alert-danger warning";
+				    	else
+			    			warnings[i].className = "alert alert-warning warning";	
 			    	}
-		    	}
-		    }
-		});
-		});
+			    }
+			    window.setInterval(flash250, 250);
+			    function flash250(){
+			    	var flashers = document.getElementsByClassName("flash250");
+			    	var i;
+			    	for(i = 0; i < flashers.length; i++){
+				    	if(flashers[i].style.color == "red"){
+				    		flashers[i].style.color = "black";
+				    	}else{
+				    		flashers[i].style.color = "red";
+				    	}
+			    	}
+			    }
+			});
 		</script>
 		<nav class="navbar navbar-default navbar-static-top">
 			<div class="container">
@@ -44,7 +42,13 @@
 				<div>
 					<ul class="nav navbar-nav">
 					{% if user.access == 4 %}
-						<li class="active"><a href="reception">Reception</a></li>
+						{% if title == "Reception" %}
+							<li><a href="index">Home</a></li>
+							<li class="active"><a href="reception">Reception</a></li>
+						{% else %}
+							<li class="active"><a href="index">Home</a></li>
+							<li><a href="reception">Reception</a></li>
+						{% endif %}
 					{% elif user.access != 4 %}
 						{% for navitem in navigation %}
 							{% if navitem.name == title %}

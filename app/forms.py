@@ -26,7 +26,7 @@ class LogAccessForm(Form):
 class EditUserForm(Form):
 	access = RadioField("Access Level", choices=accessLevels, default=1)
 	facid = IntegerField("Facility ID")
-	cardid = IntegerField("Card ID")
+	cardid = IntegerField("Card ID")	
 
 class CreateGuestForm(Form):
 	username = StringField("Guest Name", [validators.Length(min=3, max=28)])

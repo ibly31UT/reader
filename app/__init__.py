@@ -21,6 +21,7 @@ from .models import User, Reader
 import json
 import random
 import datetime
+import time
 from admin import start_admin
 
 start_admin(app, db)
@@ -44,6 +45,9 @@ guest = User("Employee 2's Wife", 0, cardid[3], facid[3], "password")
 security = User("Security Guard #145", 2, cardid[4], facid[4], "password")
 priority = User("CEO Matthews", 3, cardid[5], facid[5], "password")
 frontdesk = User("Front Desk Employee", 4, cardid[6], facid[6], "password")
+
+admin.cardid="1111"
+admin.facid="1111"
 
 db.session.add(admin)
 db.session.add(user)

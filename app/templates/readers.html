@@ -7,6 +7,7 @@
 		            url: "/readerEnable",
 		            data: {"readerID": this.id},
 		            type: "POST",
+		            dataType: "json",
 		            success: function(response) {
 		                window.alert(response);
 		                console.log(response);
@@ -17,7 +18,138 @@
 		        });
 		    });
 		});
+
+		// if it is necessary to use user.id not as an index into the array, 
+		// we need to search through this users[] array and find a matching user.id (add into the JSON.parse statement then)
+		// for now, (user.id - 1) works as an index
+		var users = [];
+		{% for user in users %}
+		var user{{ loop.index0 }} = JSON.parse('{"username": "{{ user.username }}"}');
+		users.push(user{{ loop.index0 }});
+		{% endfor %}
+
+		var readers = [];
+		{% for reader in readers %}
+		var readerArray{{ loop.index0 }} = {{ reader.users|tojson }};
+		readers.push(JSON.parse(readerArray{{ loop.index0 }}));
+		{% endfor %}
+
+		var currentReader = -1;	// this will be set by changeUserList() before it used in toggleUserList
+		
+		// programatically transfer user template array to a list of push statements
+		// for use in javascript.
+
+		// do template creation of user list modal
+		// use javascript for elements by classname to change button from primary to success
+		// use as a select-list input, ajax to communicate to server
+
+		$(document).ready(function() {
+			$("#changeUserListModal").modal("show");
+		});
+
+		function saveUserListChanges(){
+			$.ajax({
+	            url: "/readerChangeUserList",
+	            data: "{'readerID': '1'}",
+	            //data: {"readerID": currentReader + 1, "readerUserArray": readers[currentReader]},
+	            type: "POST",
+	            dataType: "json",
+	            contentType: "application/json; charset=utf-8",
+	            success: function(response){
+	            	//var reader = JSON.parse(response);
+	                console.log(response);
+	            },
+	            error: function(error){
+	                console.log(error);
+	            }
+		    });
+		}
+
+		function toggleUserList(userID){
+			var readerUserList = readers[currentReader];
+			var toggleUserIDoneindexed = userID;
+
+			var userExistsInList = false;
+			var userExistIndex = -1;
+
+			for(var i = 0; i < readerUserList.length; i++){
+				if(toggleUserIDoneindexed == parseInt(readerUserList[i])){
+					userExistsInList = true;
+					userExistIndex = i;
+				}
+			}
+
+			if(userExistsInList){
+				readerUserList.splice(userExistIndex, 1);
+			}else{
+				readerUserList.push(userID.toString());
+			}
+
+			readers[currentReader] = readerUserList;
+			changeUserList(currentReader + 1);
+		}
+
+
+		function changeUserList(readerID){
+			currentReader = readerID - 1; // minus one because ID's are 1-indexed, not zero-indexed
+			var userListTable = document.getElementById("changeUserListTable");
+			var readerUserList = readers[currentReader];	
+
+			var userListButtons = document.getElementsByClassName("userListButton");
+			for(var i = 0; i < userListButtons.length; i++){
+				var user = users[i];
+				var userAuthorized = false;
+				$(userListButtons[i]).removeClass("btn-danger").removeClass("btn-success");
+				for(var j = 0; j < readerUserList.length; j++){
+					if(parseInt(readerUserList[j] - 1) == i){	// minus 1 again because readerUserList ID's are 1-indexed
+						userAuthorized = true;
+					}
+				}
+				if(userAuthorized){
+					$(userListButtons[i]).addClass("btn-success");
+					userListButtons[i].innerHTML = "Authorized";
+				}else{
+					$(userListButtons[i]).addClass("btn-danger");
+					userListButtons[i].innerHTML = "Unauthorized";
+				}
+			}
+
+			var userListDialog = document.getElementById("changeUserListDialog");
+			$("#changeUserListDialog").modal("show");
+		}
 	</script>
+	<div id="changeUserListDialog" class="modal fade" role="dialog">
+      	<div class="modal-dialog">
+	        <div class="modal-content">
+	          	<div class="modal-header">
+	            	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	            	<h4 class="modal-title">Change User Authorization List</h4>
+	        	</div>
+		        <div class="modal-body">
+			        <table class="table table-striped">
+				        <thead>
+				        	<tr>
+				        		<th>Username</th>
+				        		<th>Authorized</th>
+				        	</tr>
+				        </thead>
+				        <tbody id="changeUserListTable">
+				        {% for user in users %}
+							<tr>
+								<td>{{ user.username }}</td>
+								<td class="text-center"><button class="btn btn-danger userListButton" onclick="toggleUserList({{ user.id }})">Unauthorized</button></td>
+							</tr>
+				        {% endfor %}
+	            		</tbody>
+	        		</table>
+		        </div>
+		        <div class="modal-footer">
+			        <button type="button" class="btn btn-success" onclick="saveUserListChanges()" data-dismiss="modal">Save Changes</button>
+		            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+		        </div>
+    		</div>
+    	</div>
+	</div>
 	<div class="panel-group">
 		{% if user.access == 99 %}
 		<div class="panel panel-info">
@@ -60,12 +192,10 @@
 								{% endfor %}
 							{% endfor %}
 							</td>
-							<td>
-								{{ reader.starttime }} - {{ reader.endtime}}
-							</td>
-							<td style="width:15%">
-								<a href="#" id="{{ reader.id }}" class="btn btn-primary enable">Enable</a>
-								<a href="#" id="{{ reader.id }}" class="btn btn-primary disable">Disable</a>
+							<td>{{ reader.starttime }} - {{ reader.endtime}}</td>
+							<td style="width:20%">
+								<button class="btn btn-primary enable">Enable</button>
+								<button class="btn btn-primary changeUserList" onclick="changeUserList({{ reader.id }})">User Auth List</button>
 							</td>
 						</tr>
 					{% endfor %}

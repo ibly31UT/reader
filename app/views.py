@@ -4,11 +4,26 @@ from app import app, db, lm
 from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm
 from .models import User, Reader
 import json
+import datetime
+import time
+import random
 
 navigation = [{"name": "Home", "link": "index"}, {"name": "Card Readers", "link": "readers"}, {"name": "Personnel", "link": "users"}, {"name": "Reception", "link": "reception"}, {"name": "Settings", "link": "settings"}]
 #accessLevels = [("0","Guest"), ("1","User"), ("2","Security"), ("3","Priority User"), ("99","Admin")]
 accessLevels = ["Guest", "User", "Security", "Priority User", "Reception"]
 # ^^ Also defined identically in forms.py, unsure how to make a global declaration of this array
+
+def logUser():
+	while True:
+		reader = Reader.query.get(int(g.user.receptionCurrentReader))
+		readerLogArray = json.loads(reader.log)
+
+		user = User.query.filter_by(username="admin").first()
+		
+		readerLogArray.append({"user": user.id, "time": str(datetime.datetime.now())})
+		reader.log = json.dumps(readerLogArray)
+		db.session.commit()
+		time.sleep(5)
 
 @app.before_request
 def before_request():
@@ -34,11 +49,15 @@ def index():
 			flash("Couldn't find that user.", "error")
 			return redirect("/index")
 		remember_me = False
-		if 'remember_me' in session:
-			remember_me = session['remember_me']
-			session.pop('remember_me', None)
+		if "remember_me" in session:
+			remember_me = session["remember_me"]
+			session.pop("remember_me", None)
+		else:
+			session["remember_me"] = form.remember_me.data
 		if form.password.data == user.password:
 			login_user(user, remember = remember_me)
+			if user.access == 4: # reception user logged in
+				return redirect("/reception")
 			return redirect("/users")
 		else:
 			flash("The password you entered is not correct.", "error")
@@ -65,6 +84,36 @@ def readers():
 
 	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, navigation=navigation)
 
+@app.route("/readerChangeUserList", methods=["POST"])
+def readerChangeUserList():
+	print "Made it"
+	readerID = request.form["readerID"];
+	print "Made it 2"
+	reader = Reader.query.get(int(1))
+	#readerUserList = request.form["readerUserArray"];
+	#print str(readerUserList)
+	print str(readerID)
+
+	#reader.update(dict(users=readerUserList))
+
+	return json.dumps({"status": "OK", "readerName": reader.name})
+
+@app.route("/readerEnable", methods=["POST"])
+@login_required
+def readerEnable():
+	readerID = request.form["readerID"]
+	reader = Reader.query.get(int(readerID))
+
+	return json.dumps({"status": "OK", "readerName": reader.name})
+
+@app.route("/readerDisable", methods=["POST"])
+@login_required
+def readerDisable():
+	readerID = request.form["readerID"]
+	reader = Reader.query.get(int(readerID))
+
+	return json.dumps({"status": "OK", "readerName": reader.name})
+
 @app.route("/users", methods=["GET", "POST"])
 @login_required
 def users():
@@ -73,16 +122,17 @@ def users():
 
 	if g.user.access == 99:
 		if createUserForm.validate_on_submit():
-			existing_user = User.query.filter_by(username=form.username.data).first()
+			existing_user = User.query.filter_by(username=createUserForm.username.data).first()
 			if existing_user is None:
-				newuser = User(createUserForm.username.data, int(createUserForm.access.data), createUserForm.password.data)
+				facid = str(int(random.random() * 9999))
+				cardid = str(int(random.random() * 9999))
+				newuser = User(createUserForm.username.data, int(createUserForm.access.data), cardid, facid, createUserForm.password.data)
 				db.session.add(newuser)
 				db.session.commit()
 				flash("Successfully added user %s to the system with access level %s." % (createUserForm.username.data, createUserForm.access.data))
-				return redirect("/users")
 			else:
 				flash("A user exists already with that username.", "error")
-				return redirect("/users")
+			return redirect("/users")
 		elif createUserForm.errors:
 			flash(createUserForm.errors, "error")
 		elif editUserForm.validate_on_submit():
@@ -101,26 +151,78 @@ def users():
 def reception():
 	readers = Reader.query.all()
 	users = User.query.all()
-	currentReader = 2
 
 	createGuestForm = CreateGuestForm()
 	manualCheckInForm = ManualCheckInForm()
 
-	return render_template("reception.html", title="Reception", readers=readers, currentReader=currentReader, users=users, createGuestForm=createGuestForm, manualCheckInForm=manualCheckInForm, user=g.user, navigation=navigation)
+	if manualCheckInForm.validate_on_submit():
+		username = manualCheckInForm.username.data
+		facid = manualCheckInForm.facid.data
+		cardid = manualCheckInForm.cardid.data
 
-@app.route("/readerEnable", methods=["POST"])
-def readerEnable():
+		reader = Reader.query.get(int(g.user.receptionCurrentReader))
+		readerLogArray = json.loads(reader.log)
+
+		user = User.query.filter_by(username=username, facid=facid, cardid=cardid).first()
+		if user is None:
+			flash("Could not check in user, please ensure the Facility ID and Card ID are correct.", "error")
+		else:
+			readerLogArray.append({"user": user.id, "time": str(datetime.datetime.now())})
+			reader.log = json.dumps(readerLogArray)
+			db.session.commit()
+
+	user = g.user
+	promptChooseReader = False
+	if user.receptionCurrentReader is None:
+		user.receptionCurrentReader = 0
+		db.session.commit()
+		promptChooseReader = True
+
+	currentReader = int(user.receptionCurrentReader) - 1
+	# minus one because ID's are 1-indexed whereas the readers array is 0-indexed
+	return render_template("reception.html", title="Reception", readers=readers, currentReader=currentReader, promptChooseReader=promptChooseReader, users=users, createGuestForm=createGuestForm, manualCheckInForm=manualCheckInForm, user=g.user, navigation=navigation)
+
+@app.route("/receptionChangeCurrentReader", methods=["POST"])
+@login_required
+def receptionChangeCurrentReader():
+	user = g.user
 	readerID = request.form["readerID"]
+
+	user.receptionCurrentReader = readerID
+	db.session.commit()
+
 	reader = Reader.query.get(int(readerID))
 
-	return json.dumps({"status": "OK", "readerName": reader.name})
+	return json.dumps({"status": "OK", "readerName": reader.name, "readerID": int(readerID)})
 
-@app.route("/readerDisable", methods=["POST"])
-def readerDisable():
-	readerID = request.form["readerID"]
-	reader = Reader.query.get(int(readerID))
+@app.route("/receptionUpdateLog", methods=["GET"])
+@login_required
+def receptionUpdateLog():
+	user = g.user
+	reader = Reader.query.get(int(user.receptionCurrentReader))
 
-	return json.dumps({"status": "OK", "readerName": reader.name})
+	logString = reader.log
+	logArray = json.loads(logString)
+
+	for log in logArray:
+		curUser = User.query.get(int(log["user"]))
+		log["username"] = curUser.username
+
+	return json.dumps({"status": "OK", "log": logArray})
+
+@app.route("/receptionCheckIn", methods=["POST"])
+@login_required
+def receptionCheckIn():
+	username = request.form["username"]
+	facid = request.form["facid"]
+	cardid = request.form["cardid"]
+
+	user = User.query.filter_by(username=username, facid=facid, cardid=cardid)
+
+	if user is not None:
+		print "Successful log in"
+
+	return json.dumps({"status": "OK"})
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -132,7 +234,7 @@ def settings():
 	if g.user.access == 99:
 		if adminPasswordForm.validate_on_submit():
 			if g.user.password == adminPasswordForm.oldpassword.data:
-				admin = User.query.filter_by(access=2).update(dict(password=adminPasswordForm.password.data))
+				User.query.filter_by(access=99).update(dict(password=adminPasswordForm.password.data))
 				db.session.commit()
 				flash("Successfully changed admin password!")
 			else:

@@ -1,4 +1,6 @@
 from app import db
+import json
+import datetime
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,6 +9,7 @@ class User(db.Model):
     cardid = db.Column(db.String(64), nullable=False)
     facid = db.Column(db.String(64), nullable=False)
     password = db.Column(db.String(64), nullable=False)
+    receptionCurrentReader = db.Column(db.String(64), nullable=True)
     
     def __init__(self, username, access, cardid, facid, password):
         self.username = username
@@ -14,6 +17,7 @@ class User(db.Model):
         self.cardid = cardid
         self.facid = facid
         self.password = password
+        self.receptionCurrentReader = None
 
     @property
     def is_authenticated(self):
@@ -40,6 +44,7 @@ class Reader(db.Model):
     users = db.Column(db.String(128), nullable=False)
     starttime = db.Column(db.Time, nullable=False)
     endtime = db.Column(db.Time, nullable=False)
+    log = db.Column(db.String(256), nullable=False)
     
     def __init__(self, name, status, users, starttime, endtime):
         self.name = name
@@ -47,6 +52,7 @@ class Reader(db.Model):
         self.users = users
         self.starttime = starttime
         self.endtime = endtime
+        self.log = json.dumps([{"user": 1, "time": str(datetime.datetime.now())}])
 
     @property
     def is_authenticated(self):
