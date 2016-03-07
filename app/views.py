@@ -67,6 +67,26 @@ def index():
 
 	return render_template("index.html", title="Home", form=form, user=g.user, navigation=navigation)
 
+@app.route("/getUsers")
+@login_required
+def getUsers():
+	users = User.query.all()
+	userList = []
+	for user in users:
+		userList.append({"id": user.id, "username": user.username, "access": user.access, "facid": user.facid, "cardid": user.cardid})
+
+	return json.dumps(userList)
+
+@app.route("/getReaders")
+@login_required
+def getReaders():
+	readers = Reader.query.all()
+	readerList = []
+	for reader in readers:
+		readerList.append({"id": reader.id, "name": reader.name, "status": reader.status, "users": reader.users})
+
+	return json.dumps(readerList)
+
 @app.route("/readers")
 @login_required
 def readers():
@@ -82,7 +102,7 @@ def readers():
 		flash("You are not logged in as a user capable of viewing settings. Please log in as admin.")
 		return redirect("/index")
 
-	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, navigation=navigation)
+	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, accessLevels=accessLevels, navigation=navigation)
 
 @app.route("/readerChangeUserList", methods=["POST"])
 def readerChangeUserList():

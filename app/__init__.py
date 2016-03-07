@@ -38,16 +38,14 @@ for i in range(0, 7):
 	cardid.append(str(int(random.random() * 9999)))
 	facid.append(str(int(random.random() * 9999)))
 
-admin = User("admin", 99, cardid[0], facid[0], "password")
-user = User("Employee 1", 1, cardid[1], facid[1], "password")
-user2 = User("Employee 2", 1, cardid[2], facid[2], "password")
-guest = User("Employee 2's Wife", 0, cardid[3], facid[3], "password")
-security = User("Security Guard #145", 2, cardid[4], facid[4], "password")
-priority = User("CEO Matthews", 3, cardid[5], facid[5], "password")
-frontdesk = User("Front Desk Employee", 4, cardid[6], facid[6], "password")
+admin = User("admin", 99, "1111", "1111", "password")
+user = User("Employee 1", 1, "4525", "4130", "password")
+user2 = User("Employee 2", 1, "9062", "0982", "password")
+guest = User("Employee 2's Wife", 0, "9842", "9379", "password")
+security = User("Security Guard #145", 2, "6190", "4906", "password")
+priority = User("CEO Matthews", 3, "4005", "4147", "password")
+frontdesk = User("Front Desk Employee", 4, "6882", "6129", "password")
 
-admin.cardid="1111"
-admin.facid="1111"
 
 db.session.add(admin)
 db.session.add(user)
@@ -56,6 +54,14 @@ db.session.add(guest)
 db.session.add(security)
 db.session.add(priority)
 db.session.add(frontdesk)
+
+for i in range(0, 100):
+	username = "User #" + str(int((random.random() * 999))).zfill(4)
+	facid = str(int(random.random() * 9999)).zfill(4)
+	cardid = str(int(random.random() * 9999)).zfill(4)
+	newUser = User(username, i % 5, cardid, facid, "password")
+	db.session.add(newUser)
+
 db.session.commit()
 
 starttime = datetime.time(5, 0, 0)
