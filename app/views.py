@@ -86,17 +86,17 @@ def readers():
 
 @app.route("/readerChangeUserList", methods=["POST"])
 def readerChangeUserList():
-	print "Made it"
-	readerID = request.form["readerID"];
-	print "Made it 2"
-	reader = Reader.query.get(int(1))
-	#readerUserList = request.form["readerUserArray"];
-	#print str(readerUserList)
-	print str(readerID)
-
-	#reader.update(dict(users=readerUserList))
-
-	return json.dumps({"status": "OK", "readerName": reader.name})
+	requestObject = request.get_json()
+	readerID = requestObject["readerID"];
+	readerUserList = requestObject["readerUserList"];
+	readerUserListString = json.dumps(readerUserList)
+	reader = Reader.query.get(int(readerID))
+	if reader is not None:
+		Reader.query.filter_by(id=int(readerID)).update(dict(users=readerUserListString))
+		db.session.commit()
+		return json.dumps({"status": "OK", "readerName": reader.name, "readerUserList": readerUserListString})
+	else:
+		return json.dumps({"status": "ERROR"})
 
 @app.route("/readerEnable", methods=["POST"])
 @login_required

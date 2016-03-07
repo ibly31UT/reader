@@ -50,12 +50,26 @@
 		function saveUserListChanges(){
 			$.ajax({
 	            url: "/readerChangeUserList",
-	            data: "{'readerID': '1'}",
-	            //data: {"readerID": currentReader + 1, "readerUserArray": readers[currentReader]},
+	            data: JSON.stringify({"readerID": currentReader + 1, "readerUserList": readers[currentReader]}),
 	            type: "POST",
 	            dataType: "json",
-	            contentType: "application/json; charset=utf-8",
+	            contentType: "application/json",
 	            success: function(response){
+	            	var readerUserLists = document.getElementsByClassName("readerUserList");
+	            	var readerUserListString = response["readerUserList"];
+	            	console.log("RULS: " + readerUserListString);
+	            	var readerUserListArray = JSON.parse(readerUserListString);
+
+	            	for(var i = 0; i < readerUserLists.length; i++){
+	            		if(readerUserLists[i].id == currentReader + 1){
+	            			readerUserLists[i].innerHTML = "";
+	            			for(var j = 0; j < readerUserListArray.length; j++){
+	            				var user = users[parseInt(readerUserListArray[j] - 1)];
+	            				readerUserLists[i].innerHTML += (user.username + ", ");
+	            			}
+	            			break;
+	            		}
+	            	}
 	            	//var reader = JSON.parse(response);
 	                console.log(response);
 	            },
@@ -84,6 +98,8 @@
 			}else{
 				readerUserList.push(userID.toString());
 			}
+
+			console.log(JSON.stringify(readerUserList))
 
 			readers[currentReader] = readerUserList;
 			changeUserList(currentReader + 1);
@@ -183,7 +199,7 @@
 							{% else %}
 							<td style="color:#ff0000" class="flash250">TAMPER</td>
 							{% endif %}
-							<td>
+							<td class="readerUserList" id="{{ reader.id }}">
 							{% for readeruser in reader.users %}
 								{% for user in users %}
 									{% if user.id|int() == readeruser|int() %}
