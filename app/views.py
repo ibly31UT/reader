@@ -1,17 +1,14 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
-from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm
-from .models import User, Reader
+from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm, ChangeAccessLevelsForm
+from .models import User, Reader, GlobalSettings
 import json
 import datetime
 import time
 import random
 
 navigation = [{"name": "Home", "link": "index"}, {"name": "Card Readers", "link": "readers"}, {"name": "Personnel", "link": "users"}, {"name": "Reception", "link": "reception"}, {"name": "Settings", "link": "settings"}]
-#accessLevels = [("0","Guest"), ("1","User"), ("2","Security"), ("3","Priority User"), ("99","Admin")]
-accessLevels = ["Guest", "User", "Security", "Priority User", "Reception"]
-# ^^ Also defined identically in forms.py, unsure how to make a global declaration of this array
 
 def logUser():
 	while True:
@@ -102,6 +99,9 @@ def readers():
 		flash("You are not logged in as a user capable of viewing settings. Please log in as admin.")
 		return redirect("/index")
 
+	globalSettings = GlobalSettings.query.get(int(1))
+	accessLevels = globalSettings.getSetting("accessLevels")
+
 	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, accessLevels=accessLevels, navigation=navigation)
 
 @app.route("/readerChangeUserList", methods=["POST"])
@@ -164,6 +164,9 @@ def users():
 		return redirect("/index")
 		
 	users = User.query.all()
+	globalSettings = GlobalSettings.query.get(int(1))
+	accessLevels = globalSettings.getSetting("accessLevels")
+
 	return render_template("users.html", title="Personnel", users=users, user=g.user, accessLevels=accessLevels, createUserForm=createUserForm, editUserForm=editUserForm, navigation=navigation)
 
 @app.route("/reception", methods=["GET", "POST"])
@@ -249,7 +252,8 @@ def receptionCheckIn():
 def settings():
 	adminPasswordForm = ChangeAdminPasswordForm()
 	logAccessForm = LogAccessForm()
-	settings = [{"name": "Change Admin Password", "form": adminPasswordForm}, {"name": "Log Access Times and Locations", "form": logAccessForm}]
+	changeAccessLevelsForm = ChangeAccessLevelsForm()
+	settings = [{"name": "Change Admin Password", "form": adminPasswordForm},{"name": "Change Access Levels", "form": changeAccessLevelsForm}, {"name": "Log Access Times and Locations", "form": logAccessForm}]
 
 	if g.user.access == 99:
 		if adminPasswordForm.validate_on_submit():

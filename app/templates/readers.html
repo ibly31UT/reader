@@ -174,8 +174,6 @@
 				}
 			}
 
-			console.log(JSON.stringify(readerUserList))
-
 			readers[currentReader]["users"] = readerUserList;
 			updateUserListButtons();
 		}
@@ -266,6 +264,14 @@
 							<button class="btn btn-success">Authorize</button>
 				        </div>
 			        </div>
+			        <div class="btn-group btn-group-justified">
+	        			<div class="btn-group">
+							<button class="btn btn-success" onclick="saveUserListChanges()">Save Changes</button>
+						</div>
+						<div class="btn-group">
+							<button class="btn btn-danger" data-dismiss="modal">Close</button>
+						</div>
+					</div><br>
 			        <table class="table table-striped table-bordered">
 				        <thead>
 				        	<tr>

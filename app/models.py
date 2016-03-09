@@ -41,7 +41,7 @@ class Reader(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
     status = db.Column(db.Integer, nullable=False)
-    users = db.Column(db.String(128), nullable=False)
+    users = db.Column(db.String(256), nullable=False)
     starttime = db.Column(db.Time, nullable=False)
     endtime = db.Column(db.Time, nullable=False)
     log = db.Column(db.String(256), nullable=False)
@@ -54,17 +54,27 @@ class Reader(db.Model):
         self.endtime = endtime
         self.log = json.dumps([{"user": 1, "time": str(datetime.datetime.now())}])
 
-    @property
-    def is_authenticated(self):
-        return True
+    def get_id(self):
+        try:
+            return unicode(self.id) #python 2
+        except NameError:
+            return str(self.id) #python 3
 
-    @property
-    def is_active(self):
-        return True
+class GlobalSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    accessLevels = db.Column(db.String(128), nullable=False)
+    multipleAdmins = db.Column(db.Boolean, nullable=False)
 
-    @property
-    def is_anonymous(self):
-        return False
+    def __init__(self, accessLevels, multipleAdmins):
+        self.accessLevels = accessLevels
+        self.multipleAdmins = multipleAdmins
+
+    def getSetting(self, key):
+        if key == "accessLevels":
+            return json.loads(self.accessLevels)
+        elif key == "multipleAdmins":
+            return self.multipleAdmins
+        return None
 
     def get_id(self):
         try:
