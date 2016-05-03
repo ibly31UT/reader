@@ -10,6 +10,7 @@
               {{ setting.form.hidden_tag() }}
               {% for formitem in setting.form %}
                 {% if formitem != setting.form.csrf_token %}
+
                   <div class="form-group">
                     <label>{{ formitem.label }}</label><br>
                     {{ formitem }}

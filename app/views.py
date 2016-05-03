@@ -1,26 +1,33 @@
+# Copyright (c) 2016 William Connolly, Tyler Rocha, Justin Baiko
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all copies
+# or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+# PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE 
+# FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
-from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm, ChangeAccessLevelsForm
+from .forms import LoginForm, CreateUserForm, ChangeAdminPasswordForm, LogAccessForm, EditUserForm, CreateGuestForm, ManualCheckInForm
 from .models import User, Reader, GlobalSettings
+
 import json
 import datetime
-import time
 import random
 
 navigation = [{"name": "Home", "link": "index"}, {"name": "Card Readers", "link": "readers"}, {"name": "Personnel", "link": "users"}, {"name": "Reception", "link": "reception"}, {"name": "Settings", "link": "settings"}]
-
-def logUser():
-	while True:
-		reader = Reader.query.get(int(g.user.receptionCurrentReader))
-		readerLogArray = json.loads(reader.log)
-
-		user = User.query.filter_by(username="admin").first()
-		
-		readerLogArray.append({"user": user.id, "time": str(datetime.datetime.now())})
-		reader.log = json.dumps(readerLogArray)
-		db.session.commit()
-		time.sleep(5)
 
 @app.before_request
 def before_request():
@@ -28,7 +35,7 @@ def before_request():
 
 @lm.user_loader
 def load_user(id):
-	return User.query.get(int(id))
+	return db.session.query(User).get(int(id))
 
 @app.route("/logout")
 def logout():
@@ -41,7 +48,7 @@ def logout():
 def index():
 	form = LoginForm()
 	if form.validate_on_submit():
-		user = User.query.filter_by(username=form.username.data).first()
+		user = db.session.query(User).filter_by(username=form.username.data).first()
 		if user is None:
 			flash("Couldn't find that user.", "error")
 			return redirect("/index")
@@ -51,7 +58,7 @@ def index():
 			session.pop("remember_me", None)
 		else:
 			session["remember_me"] = form.remember_me.data
-		if form.password.data == user.password:
+		if user.check_password(form.password.data):
 			login_user(user, remember = remember_me)
 			if user.access == 4: # reception user logged in
 				return redirect("/reception")
@@ -64,11 +71,31 @@ def index():
 
 	return render_template("index.html", title="Home", form=form, user=g.user, navigation=navigation)
 
+@app.route("/getUsers")
+@login_required
+def getUsers():
+	users = db.session.query(User).all()
+	userList = []
+	for user in users:
+		userList.append({"id": user.id, "username": user.username, "access": user.access, "cardid": user.cardid})
+
+	return json.dumps(userList)
+
+@app.route("/getReaders", methods=["GET"])
+@login_required
+def getReaders():
+	readers = db.session.query(Reader).all()
+	readerList = []
+	for reader in readers:
+		readerList.append({"id": reader.id, "name": reader.name, "status": reader.status, "users": reader.users})
+
+	return json.dumps(readerList)
+
 @app.route("/readers")
 @login_required
 def readers():
-	readers = Reader.query.all()
-	users = User.query.all()
+	readers = db.session.query(Reader).all()
+	users = db.session.query(User).all()
 
 	for reader in readers:
 		if reader.status == 2:
@@ -79,14 +106,10 @@ def readers():
 		flash("You are not logged in as a user capable of viewing settings. Please log in as admin.")
 		return redirect("/index")
 
-<<<<<<< HEAD
-	globalSettings = GlobalSettings.query.get(int(1))
+	globalSettings = db.session.query(GlobalSettings).filter_by().first()
 	accessLevels = globalSettings.getSetting("accessLevels")
 
 	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, accessLevels=accessLevels, navigation=navigation)
-=======
-	return render_template("readers.html", title="Card Readers", readers=readers, users=users, user=g.user, navigation=navigation)
->>>>>>> parent of 8030dd7... User Authorization Dialog Additions
 
 @app.route("/readerChangeUserList", methods=["POST"])
 def readerChangeUserList():
@@ -94,9 +117,9 @@ def readerChangeUserList():
 	readerID = requestObject["readerID"];
 	readerUserList = requestObject["readerUserList"];
 	readerUserListString = json.dumps(readerUserList)
-	reader = Reader.query.get(int(readerID))
+	reader = db.session.query(Reader).get(int(readerID))
 	if reader is not None:
-		Reader.query.filter_by(id=int(readerID)).update(dict(users=readerUserListString))
+		db.session.query(Reader).filter_by(id=int(readerID)).update(dict(users=readerUserListString))
 		db.session.commit()
 		return json.dumps({"status": "OK", "readerName": reader.name, "readerUserList": readerUserListString})
 	else:
@@ -105,16 +128,22 @@ def readerChangeUserList():
 @app.route("/readerEnable", methods=["POST"])
 @login_required
 def readerEnable():
-	readerID = request.form["readerID"]
-	reader = Reader.query.get(int(readerID))
+	requestObject = request.get_json()
+	readerID = requestObject["readerID"]
+	reader = db.session.query(Reader).get(int(readerID))
 
-	return json.dumps({"status": "OK", "readerName": reader.name})
+	if reader is not None:
+		db.session.query(Reader).filter_by(id=int(readerID)).update(dict(status=1))
+		db.session.commit()
+		return json.dumps({"status": "OK", "readerName": reader.name})
+	else:
+		return json.dumps({"status": "ERROR"})
 
 @app.route("/readerDisable", methods=["POST"])
 @login_required
 def readerDisable():
 	readerID = request.form["readerID"]
-	reader = Reader.query.get(int(readerID))
+	reader = db.session.query(Reader).get(int(readerID))
 
 	return json.dumps({"status": "OK", "readerName": reader.name})
 
@@ -126,11 +155,10 @@ def users():
 
 	if g.user.access == 99:
 		if createUserForm.validate_on_submit():
-			existing_user = User.query.filter_by(username=createUserForm.username.data).first()
+			existing_user = db.session.query(User).filter_by(username=createUserForm.username.data).first()
 			if existing_user is None:
-				facid = str(int(random.random() * 9999))
-				cardid = str(int(random.random() * 9999))
-				newuser = User(createUserForm.username.data, int(createUserForm.access.data), cardid, facid, createUserForm.password.data)
+				cardid = str(int(random.random() * 999999))
+				newuser = User(createUserForm.username.data, int(createUserForm.access.data), cardid, createUserForm.password.data)
 				db.session.add(newuser)
 				db.session.commit()
 				flash("Successfully added user %s to the system with access level %s." % (createUserForm.username.data, createUserForm.access.data))
@@ -147,8 +175,8 @@ def users():
 		flash("You are not logged in as a user capable of viewing settings. Please log in as admin.")
 		return redirect("/index")
 		
-	users = User.query.all()
-	globalSettings = GlobalSettings.query.get(int(1))
+	users = db.session.query(User).all()
+	globalSettings = db.session.query(GlobalSettings).filter_by().first()
 	accessLevels = globalSettings.getSetting("accessLevels")
 
 	return render_template("users.html", title="Personnel", users=users, user=g.user, accessLevels=accessLevels, createUserForm=createUserForm, editUserForm=editUserForm, navigation=navigation)
@@ -156,21 +184,20 @@ def users():
 @app.route("/reception", methods=["GET", "POST"])
 @login_required
 def reception():
-	readers = Reader.query.all()
-	users = User.query.all()
+	readers = db.session.query(Reader).all()
+	users = db.session.query(User).all()
 
 	createGuestForm = CreateGuestForm()
 	manualCheckInForm = ManualCheckInForm()
 
 	if manualCheckInForm.validate_on_submit():
 		username = manualCheckInForm.username.data
-		facid = manualCheckInForm.facid.data
 		cardid = manualCheckInForm.cardid.data
 
-		reader = Reader.query.get(int(g.user.receptionCurrentReader))
+		reader = db.session.query(Reader).get(int(g.user.receptionCurrentReader))
 		readerLogArray = json.loads(reader.log)
 
-		user = User.query.filter_by(username=username, facid=facid, cardid=cardid).first()
+		user = db.session.query(User).filter_by(username=username, cardid=cardid).first()
 		if user is None:
 			flash("Could not check in user, please ensure the Facility ID and Card ID are correct.", "error")
 		else:
@@ -198,7 +225,7 @@ def receptionChangeCurrentReader():
 	user.receptionCurrentReader = readerID
 	db.session.commit()
 
-	reader = Reader.query.get(int(readerID))
+	reader = db.session.query(Reader).get(int(readerID))
 
 	return json.dumps({"status": "OK", "readerName": reader.name, "readerID": int(readerID)})
 
@@ -206,13 +233,13 @@ def receptionChangeCurrentReader():
 @login_required
 def receptionUpdateLog():
 	user = g.user
-	reader = Reader.query.get(int(user.receptionCurrentReader))
+	reader = db.session.query(Reader).get(int(user.receptionCurrentReader))
 
 	logString = reader.log
 	logArray = json.loads(logString)
 
 	for log in logArray:
-		curUser = User.query.get(int(log["user"]))
+		curUser = db.session.query(User).get(int(log["user"]))
 		log["username"] = curUser.username
 
 	return json.dumps({"status": "OK", "log": logArray})
@@ -221,10 +248,9 @@ def receptionUpdateLog():
 @login_required
 def receptionCheckIn():
 	username = request.form["username"]
-	facid = request.form["facid"]
 	cardid = request.form["cardid"]
 
-	user = User.query.filter_by(username=username, facid=facid, cardid=cardid)
+	user = db.session.query(User).filter_by(username=username, cardid=cardid)
 
 	if user is not None:
 		print "Successful log in"
@@ -236,13 +262,12 @@ def receptionCheckIn():
 def settings():
 	adminPasswordForm = ChangeAdminPasswordForm()
 	logAccessForm = LogAccessForm()
-	changeAccessLevelsForm = ChangeAccessLevelsForm()
-	settings = [{"name": "Change Admin Password", "form": adminPasswordForm},{"name": "Change Access Levels", "form": changeAccessLevelsForm}, {"name": "Log Access Times and Locations", "form": logAccessForm}]
+	settings = [{"name": "Change Admin Password", "form": adminPasswordForm}, {"name": "Log Access Times and Locations", "form": logAccessForm}]
 
 	if g.user.access == 99:
 		if adminPasswordForm.validate_on_submit():
 			if g.user.password == adminPasswordForm.oldpassword.data:
-				User.query.filter_by(access=99).update(dict(password=adminPasswordForm.password.data))
+				db.session.query(User).filter_by(access=99).update(dict(password=adminPasswordForm.password.data))
 				db.session.commit()
 				flash("Successfully changed admin password!")
 			else:
